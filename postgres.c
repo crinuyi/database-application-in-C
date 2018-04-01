@@ -61,6 +61,45 @@ int main(int argc, char const *argv[])
 
 	//__________________________________________________
 	//TEST NAGLOWKA
+  for(int i=0; i<howManyColumns; i++)
+    printf("%s ", table.data[i]);
+  printf("\n");
+
+  //zwalnianie pamieci
+  for(int c=0; c<howManyColumns; c++)
+    free(table.data[c]);
+  free(table.data);
+
+
+  //__________________________________________________
+	//RESZTA WIERSZY
+  while (fgets(temp, sizeof(temp), fileCSV) != NULL) {
+    int whichString = 0; //wskazuje na to, ktory aktualnie napis kopiujemy
+    int stringFirstIndex = 0; //bedzie wskazywac na poczatkowe miejsce wyrazu
+    int stringLastIndex = 0; //bedzie wskazywac na aktualne miejce w napisie temp
+    int counter; //licznik ilosci znakow w wyrazie
+    table.data = (char**)malloc(sizeof(char*)*howManyColumns);
+    for(int b=0; b<howManyColumns; b++) {
+      counter = 0;
+      for(int n=stringFirstIndex; temp[n] != ';' && temp[n] != '\n'; n++)
+        counter++;
+      stringLastIndex = stringFirstIndex+counter-1;
+      int m = 0;
+      printf("%d %d %d\n", counter, stringFirstIndex, stringLastIndex);
+      table.data[whichString] = (char*)malloc(sizeof(char)*(counter+1));
+      for(int x=stringFirstIndex; x<=stringLastIndex; x++) {
+        table.data[whichString][m] = temp[x];
+        m++;
+      }
+      table.data[whichString][stringLastIndex+1] = 'x';
+      stringFirstIndex = stringLastIndex+2;
+      whichString++;
+      printf("%d %d %d\n", counter, stringFirstIndex, stringLastIndex);
+    }
+
+    for(int i=0; i<3; i++)
+      printf("%c ", table.data[2][i]);
+
     for(int i=0; i<howManyColumns; i++)
       printf("%s ", table.data[i]);
     printf("\n");
@@ -69,45 +108,7 @@ int main(int argc, char const *argv[])
     for(int c=0; c<howManyColumns; c++)
       free(table.data[c]);
     free(table.data);
-
-
-    //__________________________________________________
-  	//RESZTA WIERSZY
-    while (fgets(temp, sizeof(temp), fileCSV) != NULL) {
-      int whichString = 0; //wskazuje na to, ktory aktualnie napis kopiujemy
-      int stringFirstIndex = 0; //bedzie wskazywac na poczatkowe miejsce wyrazu
-      int stringLastIndex = 0; //bedzie wskazywac na aktualne miejce w napisie temp
-      int howManyColumns = 0; //ilosc kolumn
-      int counter; //licznik ilosci znakow w wyrazie
-      for(int a=0; a<strlen(temp); a++)
-        if(temp[a] == ';' || temp[a] == '\n')
-          howManyColumns++;
-      table.data = (char**)malloc(sizeof(char*)*howManyColumns);
-      for(int b=0; b<howManyColumns; b++) {
-        counter = 0;
-        for(int n=stringFirstIndex; temp[n] != ';' && temp[n] != '\n'; n++)
-          counter++;
-        stringLastIndex = stringFirstIndex+counter-1;
-        int m = 0;
-        table.data[whichString] = (char*)malloc(sizeof(char)*(counter+1));
-        for(int x=stringFirstIndex; x<=stringLastIndex; x++) {
-          table.data[whichString][m] = temp[x];
-          m++;
-        }
-        table.data[whichString][stringLastIndex+1] = '\0';
-        stringFirstIndex = stringLastIndex+2;
-        whichString++;
-      }
-
-      for(int i=0; i<howManyColumns; i++)
-        printf("%s ", table.data[i]);
-      printf("\n");
-
-      //zwalnianie pamieci
-      for(int c=0; c<howManyColumns; c++)
-        free(table.data[c]);
-      free(table.data);
-    }
+  }
 
   fclose(fileCSV);
 	return 0;
