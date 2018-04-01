@@ -82,7 +82,7 @@ int main(int argc, char const *argv[])
     for (int a=0; a<howManyColumns; a++) {
       counter = 0;
       for(int b=stringFirstIndex; temp[b]!=';' && temp[b]!='\n'; b++)
-        //if(temp[b+1]!=';') <- dlaczego nie chcialo dzialac?
+        //if(temp[b+1]!=';') <- dlaczego nie chcialo dzialac???
           counter++;
       stringLastIndex = stringFirstIndex+counter-1;
       int x=0;
