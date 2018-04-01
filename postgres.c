@@ -82,20 +82,27 @@ int main(int argc, char const *argv[])
     for (int a=0; a<howManyColumns; a++) {
       counter = 0;
       for(int b=stringFirstIndex; temp[b]!=';' && temp[b]!='\n'; b++)
-        counter++;
-        stringLastIndex = stringFirstIndex+counter-1;
-        int x=0;
-        printf("%d %d %d\n", counter, stringFirstIndex, stringLastIndex);
-        table.data[whichString] = (char*)malloc(sizeof(char)*(counter+1));
-        for(int d=stringFirstIndex; d<=stringLastIndex; d++) {
-          table.data[whichString][x] = temp[d];
-          x++;
-        }
-        table.data[whichString][counter]='\0';
+        //if(temp[b+1]!=';') <- dlaczego nie chcialo dzialac?
+          counter++;
+      stringLastIndex = stringFirstIndex+counter-1;
+      int x=0;
+      if(counter == 0) {
+        table.data[whichString] = (char*)malloc(sizeof(char)*5);
+        strcpy(table.data[whichString], "NULL\0");
         stringFirstIndex = stringLastIndex+2;
         whichString++;
-        printf("%d %d %d\n", counter, stringFirstIndex, stringLastIndex);
+        continue;
+      }
+      table.data[whichString] = (char*)malloc(sizeof(char)*(counter+1));
+      for(int d=stringFirstIndex; d<=stringLastIndex; d++) {
+          table.data[whichString][x] = temp[d];
+        x++;
+      }
+      table.data[whichString][counter]='\0';
+      stringFirstIndex = stringLastIndex+2;
+      whichString++;
     }
+    //test - do usuniecia
     for(int i=0; i<howManyColumns; i++)
       printf("%s ", table.data[i]);
     printf("\n");
