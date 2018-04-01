@@ -1,0 +1,13 @@
+(instalowane na systemie Ubuntu 16.04)
+1/2/3.  sudo apt-get update
+        sudo apt-get install postgresql postgresql-contrib
+        sudo apt-get install libpq5 libpq-dev postgresql
+        sudo -i
+        su postgres
+        cd ~
+        su crin
+        createdb
+        psql
+        alter user crin with password 'haslo';
+        \q
+        sudo apt-get update
