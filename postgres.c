@@ -79,27 +79,23 @@ int main(int argc, char const *argv[])
     int stringLastIndex = 0; //bedzie wskazywac na aktualne miejce w napisie temp
     int counter; //licznik ilosci znakow w wyrazie
     table.data = (char**)malloc(sizeof(char*)*howManyColumns);
-    for(int b=0; b<howManyColumns; b++) {
+    for (int a=0; a<howManyColumns; a++) {
       counter = 0;
-      for(int n=stringFirstIndex; temp[n] != ';' && temp[n] != '\n'; n++)
+      for(int b=stringFirstIndex; temp[b]!=';' && temp[b]!='\n'; b++)
         counter++;
-      stringLastIndex = stringFirstIndex+counter-1;
-      int m = 0;
-      printf("%d %d %d\n", counter, stringFirstIndex, stringLastIndex);
-      table.data[whichString] = (char*)malloc(sizeof(char)*(counter+1));
-      for(int x=stringFirstIndex; x<=stringLastIndex; x++) {
-        table.data[whichString][m] = temp[x];
-        m++;
-      }
-      table.data[whichString][stringLastIndex+1] = 'x';
-      stringFirstIndex = stringLastIndex+2;
-      whichString++;
-      printf("%d %d %d\n", counter, stringFirstIndex, stringLastIndex);
+        stringLastIndex = stringFirstIndex+counter-1;
+        int x=0;
+        printf("%d %d %d\n", counter, stringFirstIndex, stringLastIndex);
+        table.data[whichString] = (char*)malloc(sizeof(char)*(counter+1));
+        for(int d=stringFirstIndex; d<=stringLastIndex; d++) {
+          table.data[whichString][x] = temp[d];
+          x++;
+        }
+        table.data[whichString][counter]='\0';
+        stringFirstIndex = stringLastIndex+2;
+        whichString++;
+        printf("%d %d %d\n", counter, stringFirstIndex, stringLastIndex);
     }
-
-    for(int i=0; i<3; i++)
-      printf("%c ", table.data[2][i]);
-
     for(int i=0; i<howManyColumns; i++)
       printf("%s ", table.data[i]);
     printf("\n");
