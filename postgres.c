@@ -1,117 +1,25 @@
+/*  Kompilacja:
+      gcc -I /usr/include/postgresql -o postgres postgres.c -L /usr/include/postgresql -lpq
+*/
 #include "postgres.h"
 
-typedef struct structure {
-  char* name;
-  int width;
-  char** data;
-} line;
 
 int main(int argc, char const *argv[])
 {
   line table;
-	//__________________________________________________
-	//WCZYTANIE PLIKU DO PROGRAMU
-	FILE* fileCSV; //plik podawany przy uruchamianiu programu
+  char temp[400];
+  int howManyColumns;
+
+  connectingDB();
+
+	FILE* fileCSV;
 	fileCSV = fopen(argv[1], "r");
-	char temp[400];
-	if(fileCSV == NULL) {
-		printf(" Wystapil blad przy wczytywaniu pliku!\n Nazwa pliku (z rozszerzeniem .csv) powinna wystapic po nazwie programu.\n");
-		exit(EXIT_FAILURE);
-	}
-	else
-		printf(" Plik został wczytany.\n");
+  uploadFile(fileCSV);
 
-
-	//__________________________________________________
-	//UZUPELNIANIE STRUKTURY O NAZWE TABELI
-	table.name = (char*)malloc(sizeof(char)*strlen(argv[1])-3);
-	strcpy(temp, argv[1]);
-	for(int i=0; i<strlen(temp); i++)
-		if(temp[i] == '.')
-			temp[i] = '\0';
-	strcpy(table.name, temp);
-
-	//__________________________________________________
-	//USTALANIE SZEROKOSCI TABLICY
-	fgets(temp, sizeof(temp), fileCSV);
-  int whichString = 0; //wskazuje na to, ktory aktualnie napis kopiujemy
-  int stringFirstIndex = 0; //bedzie wskazywac na poczatkowe miejsce wyrazu
-  int stringLastIndex = 0; //bedzie wskazywac na aktualne miejce w napisie temp
-  int howManyColumns = 0; //ilosc kolumn
-  int counter; //licznik ilosci znakow w wyrazie
-  for(int a=0; a<strlen(temp); a++)
-    if(temp[a] == ';' || temp[a] == '\n')
-      howManyColumns++;
-  table.data = (char**)malloc(sizeof(char*)*howManyColumns);
-  for(int b=0; b<howManyColumns; b++) {
-		counter = 0;
-    for(int n=stringFirstIndex; temp[n] != ';' && temp[n] != '\n'; n++)
-			counter++;
-    stringLastIndex = stringFirstIndex+counter-1;
-    int m = 0;
-    table.data[whichString] = (char*)malloc(sizeof(char)*(counter+1));
-    for(int x=stringFirstIndex; x<=stringLastIndex; x++) {
-      table.data[whichString][m] = temp[x];
-      m++;
-    }
-    table.data[whichString][stringLastIndex+1] = '\0';
-    stringFirstIndex = stringLastIndex+2;
-    whichString++;
-	}
-
-	//__________________________________________________
-	//TEST NAGLOWKA
-  for(int i=0; i<howManyColumns; i++)
-    printf("%s ", table.data[i]);
-  printf("\n");
-
-  //zwalnianie pamieci
-  for(int c=0; c<howManyColumns; c++)
-    free(table.data[c]);
-  free(table.data);
-
-
-  //__________________________________________________
-	//RESZTA WIERSZY
-  while (fgets(temp, sizeof(temp), fileCSV) != NULL) {
-    int whichString = 0; //wskazuje na to, ktory aktualnie napis kopiujemy
-    int stringFirstIndex = 0; //bedzie wskazywac na poczatkowe miejsce wyrazu
-    int stringLastIndex = 0; //bedzie wskazywac na aktualne miejce w napisie temp
-    int counter; //licznik ilosci znakow w wyrazie
-    table.data = (char**)malloc(sizeof(char*)*howManyColumns);
-    for (int a=0; a<howManyColumns; a++) {
-      counter = 0;
-      for(int b=stringFirstIndex; temp[b]!=';' && temp[b]!='\n'; b++)
-        //if(temp[b+1]!=';') <- dlaczego nie chcialo dzialac???
-          counter++;
-      stringLastIndex = stringFirstIndex+counter-1;
-      int x=0;
-      if(counter == 0) {
-        table.data[whichString] = (char*)malloc(sizeof(char)*5);
-        strcpy(table.data[whichString], "NULL\0");
-        stringFirstIndex = stringLastIndex+2;
-        whichString++;
-        continue;
-      }
-      table.data[whichString] = (char*)malloc(sizeof(char)*(counter+1));
-      for(int d=stringFirstIndex; d<=stringLastIndex; d++) {
-          table.data[whichString][x] = temp[d];
-        x++;
-      }
-      table.data[whichString][counter]='\0';
-      stringFirstIndex = stringLastIndex+2;
-      whichString++;
-    }
-    //test - do usuniecia
-    for(int i=0; i<howManyColumns; i++)
-      printf("%s ", table.data[i]);
-    printf("\n");
-
-    //zwalnianie pamieci
-    for(int c=0; c<howManyColumns; c++)
-      free(table.data[c]);
-    free(table.data);
-  }
+  getTableName(table, argv[1]);
+  howManyColumns = getTableWidth(fileCSV, table);
+  getFirstLine(table, howManyColumns);
+  getLines(fileCSV, table, howManyColumns);
 
   fclose(fileCSV);
 	return 0;
