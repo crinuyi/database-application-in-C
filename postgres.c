@@ -3,24 +3,24 @@
 */
 #include "postgres.h"
 
-
 int main(int argc, char const *argv[])
 {
   line table;
   char temp[400];
   int howManyColumns;
+  static PGconn* status;
 
-  connectingDB();
-
-	FILE* fileCSV;
-	fileCSV = fopen(argv[1], "r");
+  status = connectingDB();
+  FILE* fileCSV;
+  fileCSV = fopen(argv[1], "r");
   uploadFile(fileCSV);
 
-  getTableName(table, argv[1]);
+  getTableName(table, argv[1], status);
   howManyColumns = getTableWidth(fileCSV, table);
-  getFirstLine(table, howManyColumns);
+  getFirstLine(table, howManyColumns, status);
   getLines(fileCSV, table, howManyColumns);
 
+  closeConnection(status);
   fclose(fileCSV);
 	return 0;
 }

@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include<string.h>
+#include <string.h>
 #include <libpq-fe.h>
-#include<unistd.h>
+#include <unistd.h>
 
+char tableN[255];
 
 //__________________________________________________
 //STRUKTURA ZAWIERAJACE DANE Z PLIKU
@@ -13,18 +14,50 @@ typedef struct structure {
   char** data;
 } line;
 
+void doSQL(PGconn* conn, char* command){
+  PGresult* result;
+  printf("%s\n", command);
+  result = PQexec(conn, command);
+  printf("status is: %s\n", PQresStatus(PQresultStatus(result)));
+  //printf("#rows affected: %s\n", PQcmdTuples(result));
+  printf("result message: %s\n\n", PQresultErrorMessage(result));
+  switch(PQresultStatus(result)) {
+    case PGRES_TUPLES_OK:
+    {
+      int n=0, m=0;
+      int nrows = PQntuples(result);
+      int nfields = PQnfields(result);
+      printf("number of rows returned = %d\n", nrows);
+      printf("number of fields returned = %d\n", nfields);
+      for(m=0; m<nrows; m++){
+        for(n=0; n<nfields; n++)
+          printf(" %s = %s", PQfname(result, n), PQgetvalue(result, m, n));
+        printf("\n");
+      }
+    }
+  }
+  PQclear(result);
+}
+
+
+//____________________________________________________________________________________________________
+//____________________________________________________________________________________________________
+//
+
 //__________________________________________________
 //LACZENIE Z BAZA DANYCH
-void connectingDB(){
-typedef struct structure {
-  char* name;
-  int width;
-  char** data;
-} line;
+void connectionCheck(PGconn* myConnection){
+  if(PQstatus(myConnection) == CONNECTION_OK)
+    printf("\n --Nawiazano polaczenie z baza.\n");
+  else {
+    printf("\n --Brak polaczenia. Sprobuj ponownie.\n");
+    exit(EXIT_FAILURE);
+  }
+}
+PGconn* connectingDB(){
   char userName[255];
   char dbName[255];
   char* password;
-  char temp[1000];
 
   printf("\n --Podaj nazwe bazy: " );
   scanf("%s", dbName);
@@ -32,22 +65,26 @@ typedef struct structure {
   scanf("%s", userName);
   password = getpass(" --Podaj haslo: ");
 
+  char temp[1000];
   strcat(temp, "host=localhost port=5432 dbname=");
   strcat(temp, dbName);
-  strcat(temp, "  user=");
+  strcat(temp, " user=");
   strcat(temp, userName);
   strcat(temp, " password=");
   strcat(temp, password);
 
   PGconn* myConnection = PQconnectdb(temp);
-  if(PQstatus(myConnection) == CONNECTION_OK)
-    printf("\n --Nawiazano polaczenie.\n");
-  else {
-    printf("\n --Brak polaczenia. Sprobuj ponownie.\n");
-    exit(EXIT_FAILURE);
-  }
+  connectionCheck(myConnection);
+  return myConnection;
 }
 
+
+//
+//ODLACZANIE BAZY DANYCH
+void closeConnection(PGconn* myConnection){
+  PQfinish(myConnection);
+  printf("\n --Polaczenie z baza zostalo zakonczone.\n");
+}
 
 //__________________________________________________
 //WCZYTANIE PLIKU DO PROGRAMU
@@ -57,13 +94,13 @@ void uploadFile(FILE* fileCSV){
     exit(EXIT_FAILURE);
   }
   else
-    printf("\n --Plik został wczytany.\n");
+    printf("\n --Plik został wczytany do programu.\n");
 }
 
 
 //__________________________________________________
-//UZUPELNIANIE STRUKTURY O NAZWE TABELI
-void getTableName(line table, const char* tableName){
+//[sql] UZUPELNIANIE STRUKTURY O NAZWE TABELI
+void getTableName(line table, const char* tableName, PGconn* status){
   char temp[1000];
   table.name = (char*)malloc(sizeof(char)*strlen(tableName)-3);
   strcpy(temp, tableName);
@@ -71,6 +108,25 @@ void getTableName(line table, const char* tableName){
     if(temp[i] == '.')
       temp[i] = '\0';
   strcpy(table.name, temp);
+  strcpy(tableN, temp);
+  //--- SQL ---
+  char line1[200] = "DROP TABLE IF EXISTS ";
+  char line2[200] = "CREATE TABLE ";
+
+  printf("\n --Tworzenie tabeli..\n");
+  strcat(line1, table.name);
+  strcat(line1, ";");
+  strcat(line2, table.name);
+  strcat(line2, "(ID SERIAL PRIMARY KEY);");
+
+  if(PQstatus(status) == CONNECTION_OK) {
+  doSQL(status, line1);
+  doSQL(status, line2);
+  }
+  else {
+    printf(" --Wystapil blad podczas tworzenia tabeli.\n");
+    exit(EXIT_FAILURE);
+  }
 }
 
 
@@ -105,8 +161,8 @@ int getTableWidth(FILE* fileCSV, line table) {
 }
 
 //__________________________________________________
-//USTALANIE NAZW KOLUMN
-void getFirstLine(line table, int howManyColumns) {
+//[sql] USTALANIE NAZW KOLUMN
+void getFirstLine(line table, int howManyColumns, PGconn* status) {
   char temp[1000];
   int whichString = 0; //wskazuje na to, ktory aktualnie napis kopiujemy
   int stringFirstIndex = 0; //bedzie wskazywac na poczatkowe miejsce wyrazu
@@ -128,7 +184,8 @@ void getFirstLine(line table, int howManyColumns) {
     stringFirstIndex = stringLastIndex+2;
     whichString++;
   }
-  printLine(table, howManyColumns);
+  //--- SQL ---
+  //char line[500] = "ALTER TABLE ";
   freeLine(table, howManyColumns);
 }
 
