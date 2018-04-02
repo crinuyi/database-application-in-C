@@ -207,12 +207,12 @@ void getFirstLine(FILE* fileCSV, line table, PGconn* status) {
 //RESZTA WIERSZY
 void getLines(FILE* fileCSV, line table, PGconn* status){
   printf(" --Wczytywanie wierszy..\n");
-  char temp[1000];
 
   int varcharValue[howManyColumns];
   for(int x=0; x<howManyColumns; x++)
     varcharValue[x] = 20;
 
+  char temp[1000];
   while (fgets(temp, sizeof(temp), fileCSV) != NULL) {
     int whichString = 0; //wskazuje na to, ktory aktualnie napis kopiujemy
     int stringFirstIndex = 0; //bedzie wskazywac na poczatkowe miejsce wyrazu
@@ -252,6 +252,7 @@ void getLines(FILE* fileCSV, line table, PGconn* status){
         sprintf(tempo, "%d", varcharValue[whichString]);
         strcat(lineX, tempo);
         strcat(lineX, ");");
+        printf("%s\n", lineX);
         if(PQstatus(status) == CONNECTION_OK) {
         doSQL(status, lineX);
         }
@@ -260,7 +261,6 @@ void getLines(FILE* fileCSV, line table, PGconn* status){
           exit(EXIT_FAILURE);
         }
       }
-
 
       whichString++;
     }
