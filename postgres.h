@@ -18,11 +18,11 @@ typedef struct structure {
 
 void doSQL(PGconn* conn, char* command){
   PGresult* result;
-  printf("%s\n", command);
+  //printf("%s\n", command);
   result = PQexec(conn, command);
-  printf("status is: %s\n", PQresStatus(PQresultStatus(result)));
+  //printf("status is: %s\n", PQresStatus(PQresultStatus(result)));
   //printf("#rows affected: %s\n", PQcmdTuples(result));
-  printf("result message: %s\n\n", PQresultErrorMessage(result));
+  //printf("result message: %s\n\n", PQresultErrorMessage(result));
   switch(PQresultStatus(result)) {
     case PGRES_TUPLES_OK:
     {
@@ -266,4 +266,16 @@ void getLines(FILE* fileCSV, line table, PGconn* status){
     }
     freeLine(table);
   }
+}
+
+void printTable(PGconn* status) {
+  printf("\n --Utworzona tabela:\n");
+  char line[500] = "SELECT * FROM ";
+  strcat(line, tableN);
+  if(PQstatus(status) == CONNECTION_OK)
+    doSQL(status, line);
+  else {
+    printf("! --Wystapil blad polaczenia podczas drukowania.\n");
+    exit(EXIT_FAILURE);
+    }
 }

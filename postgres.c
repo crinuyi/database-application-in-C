@@ -18,6 +18,8 @@ int main(int argc, char const *argv[])
   getFirstLine(fileCSV, table, status);
   getLines(fileCSV, table, status);
 
+  printTable(status);
+
   closeConnection(status);
   fclose(fileCSV);
 	return 0;
