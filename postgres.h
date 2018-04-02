@@ -5,6 +5,8 @@
 #include <unistd.h>
 
 char tableN[255];
+int howManyColumns = 0;
+char** columns;
 
 //__________________________________________________
 //STRUKTURA ZAWIERAJACE DANE Z PLIKU
@@ -90,7 +92,7 @@ void closeConnection(PGconn* myConnection){
 //WCZYTANIE PLIKU DO PROGRAMU
 void uploadFile(FILE* fileCSV){
   if(fileCSV == NULL) {
-    printf("\n --Wystapil blad przy wczytywaniu pliku!\n Nazwa pliku (z rozszerzeniem .csv) powinna wystapic po nazwie programu.\n");
+    printf("\n! --Wystapil blad przy wczytywaniu pliku!\n Nazwa pliku (z rozszerzeniem .csv) powinna wystapic po nazwie programu.\n");
     exit(EXIT_FAILURE);
   }
   else
@@ -124,7 +126,7 @@ void getTableName(line table, const char* tableName, PGconn* status){
   doSQL(status, line2);
   }
   else {
-    printf(" --Wystapil blad podczas tworzenia tabeli.\n");
+    printf("! --Wystapil blad polaczenia podczas tworzenia tabeli.\n");
     exit(EXIT_FAILURE);
   }
 }
@@ -132,7 +134,7 @@ void getTableName(line table, const char* tableName, PGconn* status){
 
 //__________________________________________________
 //WYDRUK LINII
-void printLine(line table, int howManyColumns){
+void printLine(line table){
   for(int i=0; i<howManyColumns; i++)
     printf("%10s ", table.data[i]);
   printf("\n");
@@ -141,29 +143,24 @@ void printLine(line table, int howManyColumns){
 
 //__________________________________________________
 //ZWALNIANIE PAMIECI
-void freeLine(line table, int howManyColumns){
+void freeLine(line table){
   for(int c=0; c<howManyColumns; c++)
     free(table.data[c]);
   free(table.data);
 }
 
-
 //__________________________________________________
-//USTALANIE SZEROKOSCI TABLICY
-int getTableWidth(FILE* fileCSV, line table) {
+//[sql] USTALANIE NAZW KOLUMN I SZEROKOSCI TABLICY
+void getFirstLine(FILE* fileCSV, line table, PGconn* status) {
+  printf(" --Dodawanie kolumn..\n");
   char temp[1000];
   fgets(temp, sizeof(temp), fileCSV);
-  int howManyColumns = 0; //ilosc kolumn
   for(int a=0; a<strlen(temp); a++)
     if(temp[a] == ';' || temp[a] == '\n')
       howManyColumns++;
-  return howManyColumns;
-}
 
-//__________________________________________________
-//[sql] USTALANIE NAZW KOLUMN
-void getFirstLine(line table, int howManyColumns, PGconn* status) {
-  char temp[1000];
+  columns = (char**)malloc(sizeof(char*)*howManyColumns);
+
   int whichString = 0; //wskazuje na to, ktory aktualnie napis kopiujemy
   int stringFirstIndex = 0; //bedzie wskazywac na poczatkowe miejsce wyrazu
   int stringLastIndex = 0; //bedzie wskazywac na aktualne miejce w napisie temp
@@ -182,17 +179,34 @@ void getFirstLine(line table, int howManyColumns, PGconn* status) {
     }
     table.data[whichString][counter] = '\0';
     stringFirstIndex = stringLastIndex+2;
+    columns[whichString] = (char*)malloc(sizeof(char)*(counter+1));
+    strcpy(columns[whichString], table.data[whichString]);
+    columns[whichString][counter] = '\0';
+
+    //--- SQL ---
+    char line[1000] = "ALTER TABLE ";
+    strcat(line, tableN);
+    strcat(line, " ADD COLUMN ");
+    strcat(line, table.data[whichString]);
+    strcat(line, " VARCHAR(20);");
+    if(PQstatus(status) == CONNECTION_OK) {
+    doSQL(status, line);
+    }
+    else {
+      printf("! --Wystapil blad polaczenia podczas dodawania kolumn.\n");
+      exit(EXIT_FAILURE);
+    }
+
     whichString++;
   }
-  //--- SQL ---
-  //char line[500] = "ALTER TABLE ";
-  freeLine(table, howManyColumns);
+  freeLine(table);
 }
 
 
 //__________________________________________________
 //RESZTA WIERSZY
-void getLines(FILE* fileCSV, line table, int howManyColumns){
+void getLines(FILE* fileCSV, line table, PGconn* status){
+  printf(" --Wczytywanie wierszy..\n");
   char temp[1000];
   while (fgets(temp, sizeof(temp), fileCSV) != NULL) {
     int whichString = 0; //wskazuje na to, ktory aktualnie napis kopiujemy
@@ -220,9 +234,36 @@ void getLines(FILE* fileCSV, line table, int howManyColumns){
       }
       table.data[whichString][counter]='\0';
       stringFirstIndex = stringLastIndex+2;
+
       whichString++;
     }
-    printLine(table, howManyColumns);
-    freeLine(table, howManyColumns);
+    //--- SQL ---
+    char line[1000] = "INSERT INTO ";
+    strcat(line, tableN);
+    strcat(line, " (");
+    for(int q=0; q<howManyColumns; q++) {
+      strcat(line, columns[q]);
+      if(q==(howManyColumns-1))
+        strcat(line, ") ");
+      else
+        strcat(line, ", ");
+    }
+    strcat(line, "VALUES (");
+    for(int q=0; q<howManyColumns; q++) {
+      strcat(line, "'");
+      strcat(line, table.data[q]);
+      if(q==(howManyColumns-1))
+        strcat(line, "');");
+      else
+        strcat(line, "', ");
+    }
+    if(PQstatus(status) == CONNECTION_OK) {
+    doSQL(status, line);
+    }
+    else {
+      printf("! --Wystapil blad polaczenia podczas dodawania kolumn.\n");
+      exit(EXIT_FAILURE);
+    }
+    freeLine(table);
   }
 }

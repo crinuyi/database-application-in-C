@@ -7,7 +7,6 @@ int main(int argc, char const *argv[])
 {
   line table;
   char temp[400];
-  int howManyColumns;
   static PGconn* status;
 
   status = connectingDB();
@@ -16,9 +15,8 @@ int main(int argc, char const *argv[])
   uploadFile(fileCSV);
 
   getTableName(table, argv[1], status);
-  howManyColumns = getTableWidth(fileCSV, table);
-  getFirstLine(table, howManyColumns, status);
-  getLines(fileCSV, table, howManyColumns);
+  getFirstLine(fileCSV, table, status);
+  getLines(fileCSV, table, status);
 
   closeConnection(status);
   fclose(fileCSV);
