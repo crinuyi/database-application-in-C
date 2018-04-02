@@ -208,6 +208,11 @@ void getFirstLine(FILE* fileCSV, line table, PGconn* status) {
 void getLines(FILE* fileCSV, line table, PGconn* status){
   printf(" --Wczytywanie wierszy..\n");
   char temp[1000];
+
+  int varcharValue[howManyColumns];
+  for(int x=0; x<howManyColumns; x++)
+    varcharValue[x] = 20;
+
   while (fgets(temp, sizeof(temp), fileCSV) != NULL) {
     int whichString = 0; //wskazuje na to, ktory aktualnie napis kopiujemy
     int stringFirstIndex = 0; //bedzie wskazywac na poczatkowe miejsce wyrazu
@@ -234,6 +239,28 @@ void getLines(FILE* fileCSV, line table, PGconn* status){
       }
       table.data[whichString][counter]='\0';
       stringFirstIndex = stringLastIndex+2;
+
+      // - SQL -
+      if(counter>varcharValue[whichString]) {
+        varcharValue[whichString] = counter;
+        char lineX[1000] = "ALTER TABLE ";
+        strcat(lineX, tableN);
+        strcat(lineX, " ALTER COLUMN ");
+        strcat(lineX, columns[whichString]);
+        strcat(lineX, " TYPE VARCHAR(");
+        char tempo[10];
+        sprintf(tempo, "%d", varcharValue[whichString]);
+        strcat(lineX, tempo);
+        strcat(lineX, ");");
+        if(PQstatus(status) == CONNECTION_OK) {
+        doSQL(status, lineX);
+        }
+        else {
+          printf("! --Wystapil blad polaczenia podczas dodawania kolumn.\n");
+          exit(EXIT_FAILURE);
+        }
+      }
+
 
       whichString++;
     }
