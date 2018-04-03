@@ -85,7 +85,7 @@ PGconn* connectingDB(){
 //ODLACZANIE BAZY DANYCH
 void closeConnection(PGconn* myConnection){
   PQfinish(myConnection);
-  printf("\n --Polaczenie z baza zostalo zakonczone.\n");
+  printf("\n --Polaczenie z baza zostalo zakonczone.\n\n");
 }
 
 //__________________________________________________
@@ -252,7 +252,6 @@ void getLines(FILE* fileCSV, line table, PGconn* status){
         sprintf(tempo, "%d", varcharValue[whichString]);
         strcat(lineX, tempo);
         strcat(lineX, ");");
-        printf("%s\n", lineX);
         if(PQstatus(status) == CONNECTION_OK) {
         doSQL(status, lineX);
         }
@@ -299,10 +298,39 @@ void printTable(PGconn* status) {
   printf("\n --Utworzona tabela:\n");
   char line[500] = "SELECT * FROM ";
   strcat(line, tableN);
+
   if(PQstatus(status) == CONNECTION_OK)
     doSQL(status, line);
   else {
     printf("! --Wystapil blad polaczenia podczas drukowania.\n");
     exit(EXIT_FAILURE);
     }
+}
+
+void creatingHTMLfile(PGconn* status){
+  PGresult* result;
+  FILE* HTMLfile = fopen("HTMLfile.html", "w");
+  char line[500] = "SELECT * FROM ";
+  strcat(line, tableN);
+
+  if(PQstatus(status)==CONNECTION_OK) {
+    result = PQexec(status, line);
+
+    if(PQresultStatus(result)==PGRES_TUPLES_OK) {
+      PQprintOpt pqp;
+      pqp.header = 1;
+      pqp.align = 1;
+      pqp.html3 = 1;
+      pqp.expanded = 0;
+      pqp.pager = 0;
+      pqp.fieldSep = "";
+      pqp.tableOpt = "align=center";
+      pqp.caption = "";
+      pqp.fieldName = NULL;
+      printf("<!DOCTYPE html><HTML><HEAD><STYLE> body {background-color: powderblue;} </STYLE></HEAD><BODY>\n");
+      PQprint(HTMLfile, result, &pqp);
+      printf("</BODY></HTML>\n");
+    }
+  }
+  fclose(HTMLfile);
 }
