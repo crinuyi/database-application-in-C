@@ -343,38 +343,7 @@ void creatingHTMLfile(PGconn* status) {
 		fprintf(HTMLfile,"<td>%s</td>\n",PQgetvalue(result,i,j));
 	fprintf(HTMLfile,"</tr>\n");
     }
-/*
-    strcpy(sql,"begin work");
-    result = PQexec(psql,sql);
-    printf("%s",PQresultErrorMessage(result));
-    PQclear(result);
 
-    strcpy(sql,"declare cur cursor for select * from \"");
-    strcat(sql,tablename);
-    strcat(sql,"\"");
-    result = PQexec(psql,sql);
-    printf("%s",PQresultErrorMessage(result));
-    PQclear(result);
-
-    strcpy(sql,"fetch 1 from cur");
-    result = PQexec(psql,sql);
-
-    int i =1;
-    while(PQntuples(result)==1)
-    {
-        fprintf(html,"<tr class=\"k%i\">\n",i);
-        if(i==1) i++;
-        else i--;
-        for(int j=0;j<PQnfields(result);j++)
-        {
-            fprintf(html,"<td>%s</td>\n",PQgetvalue(result,0,j));
-        }
-        fprintf(html,"</tr>\n");
-        PQclear(result);
-        result = PQexec(psql,sql);
-    }
-    PQclear(result);
-*/
     fprintf(HTMLfile,"</table>\n</div>\n</body>\n</html>");
     PQclear(result);
     fclose(HTMLfile);
