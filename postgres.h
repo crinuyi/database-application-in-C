@@ -307,30 +307,77 @@ void printTable(PGconn* status) {
     }
 }
 
-void creatingHTMLfile(PGconn* status){
-  PGresult* result;
-  FILE* HTMLfile = fopen("HTMLfile.html", "w");
-  char line[500] = "SELECT * FROM ";
-  strcat(line, tableN);
+void creatingHTMLfile(PGconn* status) {
+    PGresult* result;
+    char line[150];
+    FILE *HTMLfile = fopen("index.html","w");
+    fprintf(HTMLfile,"<!DOCTYPE html>\n<html lang=\"pl\">\n<head>\n<title>Utworzony plik HTML</title>\n<meta charset=\"UTF-8\"/>\n");
+    fprintf(HTMLfile,"<style>\n");
+    fprintf(HTMLfile,"table { margin-left: auto; margin-right: auto; }\n");
+    fprintf(HTMLfile,"th, td { border: solid 1px black; padding: 5px; text-align: center; }\n");
+    fprintf(HTMLfile,"div { background-color: #000000;}\n");
+    fprintf(HTMLfile,"tr { background-color: #FFFFFF;}\n");
+    fprintf(HTMLfile,"</style>\n");
+    fprintf(HTMLfile,"</head>\n<body>\n<div>\n<table>\n");
 
-  if(PQstatus(status)==CONNECTION_OK) {
+    strcpy(line, "select * from ");
+    strcat(line, tableN);
+    strcat(line," limit 1");
     result = PQexec(status, line);
 
-    if(PQresultStatus(result)==PGRES_TUPLES_OK) {
-      PQprintOpt pqp;
-      pqp.header = 1;
-      pqp.align = 1;
-      pqp.html3 = 1;
-      pqp.expanded = 0;
-      pqp.pager = 0;
-      pqp.fieldSep = "";
-      pqp.tableOpt = "align=center";
-      pqp.caption = "";
-      pqp.fieldName = NULL;
-      printf("<!DOCTYPE html><HTML><HEAD><STYLE> body {background-color: powderblue;} </STYLE></HEAD><BODY>\n");
-      PQprint(HTMLfile, result, &pqp);
-      printf("</BODY></HTML>\n");
+    fprintf(HTMLfile,"<tr>\n");
+    for(int i=0; i<PQnfields(result); i++)
+    {
+        fprintf(HTMLfile,"<th>%s</th>\n",PQfname(result,i));
     }
-  }
-  fclose(HTMLfile);
+    fprintf(HTMLfile,"</tr>\n");
+    PQclear(result);
+
+    strcpy(line, "select * from ");
+    strcat(line, tableN);
+    result = PQexec(status, line);
+
+    for(int i=0; i<PQntuples(result); i++) {
+	fprintf(HTMLfile,"<tr>\n");
+	for(int j=0; j<PQnfields(result); j++)
+		fprintf(HTMLfile,"<td>%s</td>\n",PQgetvalue(result,i,j));
+	fprintf(HTMLfile,"</tr>\n");
+    }
+/*
+    strcpy(sql,"begin work");
+    result = PQexec(psql,sql);
+    printf("%s",PQresultErrorMessage(result));
+    PQclear(result);
+
+    strcpy(sql,"declare cur cursor for select * from \"");
+    strcat(sql,tablename);
+    strcat(sql,"\"");
+    result = PQexec(psql,sql);
+    printf("%s",PQresultErrorMessage(result));
+    PQclear(result);
+
+    strcpy(sql,"fetch 1 from cur");
+    result = PQexec(psql,sql);
+
+    int i =1;
+    while(PQntuples(result)==1)
+    {
+        fprintf(html,"<tr class=\"k%i\">\n",i);
+        if(i==1) i++;
+        else i--;
+        for(int j=0;j<PQnfields(result);j++)
+        {
+            fprintf(html,"<td>%s</td>\n",PQgetvalue(result,0,j));
+        }
+        fprintf(html,"</tr>\n");
+        PQclear(result);
+        result = PQexec(psql,sql);
+    }
+    PQclear(result);
+*/
+    fprintf(HTMLfile,"</table>\n</div>\n</body>\n</html>");
+    PQclear(result);
+    fclose(HTMLfile);
+
+
 }
