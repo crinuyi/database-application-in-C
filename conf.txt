@@ -1,4 +1,4 @@
-(instalowane na systemie Ubuntu 16.04)
+(instalowane na systemie Ubuntu 16.04 - konfiguracja postgreSQL)
 1/2/3.  sudo apt-get update
         sudo apt-get install postgresql postgresql-contrib
         sudo apt-get install libpq5 libpq-dev postgresql
